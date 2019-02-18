@@ -19,8 +19,11 @@ public class Main {
         java.util.logging.Logger
                 .getLogger("org.apache.pdfbox").setLevel(java.util.logging.Level.OFF);
 
+        Properties prop = new Properties();
+        InputStream input = new FileInputStream("src/main/config.properties");
+
         // get Vocabulary file
-        File file = new File("src/main/resources/vocabulary.csv");
+        File file = new File("src/main/vocabulary.csv");
 
         // create List of words
         List<String> voc = Arrays.asList(readVoc(file).split("\\s*,\\s*"));
@@ -29,9 +32,8 @@ public class Main {
         List<int[]> vectors = new ArrayList<int[]>();
 
         // iterate over pdf files
-        Properties prop = new Properties();
-        int nbPdfToCheck = Integer.parseInt(getProp(prop, "nbPdfToCheck"));
-        File dir = new File(getProp(prop, "folder"));
+        int nbPdfToCheck = Integer.parseInt(getProp(prop, "nbPdfToCheck", input));
+        File dir = new File(getProp(prop, "folder", input));
         File[] directoryListing = dir.listFiles((d, name) -> name.endsWith(".pdf"));
         if (directoryListing != null) {
             for (int i = 0; (i < directoryListing.length && i < nbPdfToCheck); i++) {
@@ -48,7 +50,7 @@ public class Main {
         showDuplicates(vectors, directoryListing);
 
         long endTime = System.nanoTime();
-        System.out.println("Execution time : "+ (endTime - startTime)/1000000 +" ms");
+        System.out.println("Execution time : " + (endTime - startTime) / 1000000 + " ms");
     }
 
 
@@ -88,14 +90,13 @@ public class Main {
     /**
      * Get a prop from config.properties
      *
-     * @param prop properties
+     * @param prop     properties
      * @param propName propertie name
+     * @param input    input stream
      * @return the prop. value
      * @throws IOException
      */
-    private static String getProp(Properties prop, String propName) throws IOException {
-        InputStream input = null;
-        input = new FileInputStream("src/main/resources/config.properties");
+    private static String getProp(Properties prop, String propName, InputStream input) throws IOException {
         prop.load(input);
         return prop.getProperty(propName);
     }
@@ -125,6 +126,7 @@ public class Main {
      * @return vector
      */
     private static int[] generateVector(String text, List<String> voc) {
+        System.out.println("Generate vectors...");
         int[] vector = new int[voc.size()];
         for (int i = 0; i < voc.size(); i++) {
             vector[i] = countWord(text, voc.get(i));
@@ -135,7 +137,7 @@ public class Main {
     /**
      * Display similar files
      *
-     * @param vectors vectors list
+     * @param vectors          vectors list
      * @param directoryListing files
      */
     private static void showDuplicates(List<int[]> vectors, File[] directoryListing) {
@@ -144,13 +146,13 @@ public class Main {
             int[] vector = vectors.get(i);
             for (int j = 0; j < vectors.size(); j++) {
                 if (i != j && Arrays.equals(vector, vectors.get(j))) {
-                    nb ++;
+                    nb++;
                     System.out.println("Similar files fount : [" + directoryListing[i] + "] and [" + directoryListing[j] + "]");
                     System.out.println(Arrays.toString(vector));
                     System.out.println(Arrays.toString(vectors.get(j)));
                 }
             }
         }
-        System.out.println("Checking completed : " + nb/2 + " similarities fount.");
+        System.out.println("Checking completed : " + nb / 2 + " similarities fount.");
     }
 }
